@@ -1,7 +1,7 @@
 window.onload = () => {
   // Set the width and height of the SVG container
-  const width = 500;
-  const height = 500;
+  const width = 1000;
+  const height = 600;
   
   async function forceLayout() {
     const nodes = [];

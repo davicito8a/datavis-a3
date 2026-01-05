@@ -23,6 +23,7 @@ function ForceGraph({
   colors = d3.schemeTableau10, // an array of color strings, for the node groups
   width = 640, // outer width, in pixels
   height = 400, // outer height, in pixels
+  boundaryPadding = 0, // padding from the SVG edge, in pixels
   invalidation // when this promise resolves, stop the simulation
 } = {}) {
   // Compute values.
@@ -40,6 +41,48 @@ function ForceGraph({
   nodes = d3.map(nodes, (n, i) => ({id: N[i], data:n }));
   links = d3.map(links, (l, i) => ({source: LS[i], target: LT[i], data: l}));
 
+  const radiusAtIndex = (index) => {
+    const r = R ? R[index] : (typeof nodeRadius === "function" ? nodeRadius(nodes[index].data) : nodeRadius);
+    return Number.isFinite(r) ? r : 0;
+  };
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  function forceBounds() {
+    let simNodes;
+
+    function force() {
+      if (!simNodes) return;
+      for (const n of simNodes) {
+        const r = radiusAtIndex(n.index) + boundaryPadding;
+        const minX = -width / 2 + r;
+        const maxX = width / 2 - r;
+        const minY = -height / 2 + r;
+        const maxY = height / 2 - r;
+
+        // If a node hits a wall, clamp it and reflect velocity (bounce).
+        if (n.x < minX) {
+          n.x = minX;
+          n.vx = Math.abs(n.vx || 0);
+        } else if (n.x > maxX) {
+          n.x = maxX;
+          n.vx = -Math.abs(n.vx || 0);
+        }
+
+        if (n.y < minY) {
+          n.y = minY;
+          n.vy = Math.abs(n.vy || 0);
+        } else if (n.y > maxY) {
+          n.y = maxY;
+          n.vy = -Math.abs(n.vy || 0);
+        }
+      }
+    }
+
+    force.initialize = (_) => (simNodes = _);
+    return force;
+  }
+
   // Compute default domains.
   if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
 
@@ -55,6 +98,7 @@ function ForceGraph({
       .force("charge", d3.forceManyBody().strength(nodeStrength))
       .force("collide", d3.forceCollide().radius(nodeRadius))
       .force("center",  d3.forceCenter())
+      .force("bounds", forceBounds())
       .on("tick", ticked);
 
   const svg = d3.select("#visualization-container")
@@ -62,6 +106,7 @@ function ForceGraph({
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [-width / 2, -height / 2, width, height])
+      .attr("overflow", "hidden")
       .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
 
   const link = svg.append("g")
@@ -115,8 +160,15 @@ function ForceGraph({
     }
 
     function dragged(event) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
+      // Prevent dragging outside the visible frame (1000x600) accounting for radius.
+      const r = radiusAtIndex(event.subject.index) + boundaryPadding;
+      const minX = -width / 2 + r;
+      const maxX = width / 2 - r;
+      const minY = -height / 2 + r;
+      const maxY = height / 2 - r;
+
+      event.subject.fx = clamp(event.x, minX, maxX);
+      event.subject.fy = clamp(event.y, minY, maxY);
     }
 
     function dragended(event) {
