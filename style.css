@@ -11,12 +11,43 @@ body {
     justify-content: center;
 }
 
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 
 
 #visualization-container {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#controls {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+#controls button {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 14px;
+    padding: 8px 16px;
+    border: 1px solid #000;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+}
+
+#controls button:hover {
+    background: #f2f2f2;
+}
+
+#controls button:active {
+    transform: translateY(1px);
 }
 
 #visualization-container svg {

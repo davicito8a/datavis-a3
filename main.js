@@ -39,6 +39,9 @@ window.onload = () => {
       { 
         width, 
         height,
+        nodeFill: "#DB7A9C",
+        nodeStroke: "#421A44",
+        linkStroke: "#421A44",
         linkStrength: d => Math.sqrt(d.data.value) / 10000,
         nodeRadius: d => d.value / 20000,
         linkStrokeWidth: d => d.value / 1000,
@@ -57,6 +60,17 @@ window.onload = () => {
     } else if (layoutType === "map") {
       // TODO: mapLayout();
     }
+  }
+
+  const mapButton = document.getElementById("btn-map");
+  const noMapButton = document.getElementById("btn-nomap");
+
+  if (mapButton) {
+    mapButton.addEventListener("click", () => draw("map"));
+  }
+
+  if (noMapButton) {
+    noMapButton.addEventListener("click", () => draw("force"));
   }
 
   draw("force"); // force by default
